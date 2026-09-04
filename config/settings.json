@@ -1,0 +1,50 @@
+{
+  "project": "DevStudio AI",
+  "version": "1.0.0",
+  "description": "The Low-Spec Developer's Security & Research Lab",
+
+  "nebius": {
+    "api_base": "https://staging.api.nebius.ai/v1",
+    "models": {
+      "reasoning": "nvidia/nemotron-3-ultra",
+      "fast": "nvidia/nemotron-nano-12b-2-v1",
+      "code": "nvidia/nemotron-super-49b-v1"
+    },
+    "max_tokens": {
+      "reasoning": 16384,
+      "fast": 4096,
+      "code": 8192
+    },
+    "temperature": {
+      "reasoning": 0.3,
+      "fast": 0.5,
+      "code": 0.2
+    }
+  },
+
+  "memory": {
+    "db_path": "data/memory.json",
+    "max_entries": 10000,
+    "auto_summarize_threshold": 500
+  },
+
+  "secure_agent": {
+    "vuln_patterns_file": "config/vuln_patterns.json",
+    "style_rules_file": "config/style_rules.json",
+    "max_line_length": 120,
+    "enable_ai_analysis": true
+  },
+
+  "docmind": {
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "supported_formats": ["txt", "md", "py", "js", "ts", "java", "c", "cpp", "go", "rs", "rb", "json", "yaml", "yml", "toml", "log", "stacktrace"],
+    "max_file_size_mb": 5
+  },
+
+  "gui": {
+    "port": 5000,
+    "host": "0.0.0.0",
+    "theme": "dark"
+  }
+}
