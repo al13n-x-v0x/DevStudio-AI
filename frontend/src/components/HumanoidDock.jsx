@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Humanoid, { STATES } from './Humanoid'
 import { speak, startListening, stopListening } from '../lib/speech'
+import { getLocalReply, JOKES, QUIPS } from '../lib/security-kb'
 
 const WITTY = {
   greet: [
@@ -34,20 +35,6 @@ const WITTY = {
 
 function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 
-function getLocalReply(input) {
-  const l = input.toLowerCase()
-  if (l.match(/sql|inject/)) return "SQL Injection: user input goes straight into queries. Use parameterized queries. `cursor.execute('SELECT * FROM users WHERE id=?', (user_id,))` — the database treats ? as data, not code."
-  if (l.match(/xss|cross.site/)) return "XSS: untrusted data in HTML. Sanitize with DOMPurify, use textContent instead of innerHTML, set Content-Security-Policy headers."
-  if (l.match(/pass|cred|hash|secret/)) return "Password security: never MD5/SHA1. Use bcrypt or argon2 with salt rounds ≥12. Store in env vars, never in code."
-  if (l.match(/api|rest/)) return "API security: HTTPS always, authenticate every request, rate limit, validate input on both sides, minimal error responses."
-  if (l.match(/jwt|token|auth/)) return "JWT: short expiry (15min) + refresh tokens. Store in httpOnly cookies, not localStorage. Never trust 'alg: none'."
-  if (l.match(/help|what can/)) return "I can: scan code for 50+ vulns, explain security concepts, suggest fixes with OWASP/CWE tags, and chat about anything security-related."
-  if (l.match(/hello|hi |hey/)) return "Hey! Paste code for me to scan, or ask about any security topic. I know my stuff."
-  if (l.match(/joke|funny/)) return "Why do programmers prefer dark mode? Because light attracts bugs. 🐛"
-  if (l.match(/who|what are you/)) return "I'm your DevStudio AI assistant. Built from dots, powered by security knowledge, running in your browser. No cloud needed."
-  return "Interesting! I'm best at security — try asking about SQL injection, XSS, passwords, API security, or JWTs."
-}
-
 export default function HumanoidDock({ scanState, findings }) {
   const [minimized, setMinimized] = useState(false)
   const [hState, setHState] = useState(STATES.WELCOME)
@@ -63,7 +50,7 @@ export default function HumanoidDock({ scanState, findings }) {
   useEffect(() => {
     if (greeted.current) return
     greeted.current = true
-    const g = randomFrom(WITTY.greet)
+    const g = randomFrom(QUIPS.greeting)
     setMessage(g)
     setHState(STATES.WAVING)
     if (voice) setTimeout(() => speak(g, { rate: 0.95 }), 500)
@@ -72,26 +59,32 @@ export default function HumanoidDock({ scanState, findings }) {
 
   useEffect(() => {
     if (hState !== STATES.IDLE) return
-    const t = setInterval(() => setMessage(randomFrom(WITTY.idle)), 12000)
+    const idlePhrases = [
+      'Waiting for code...',
+      "I don't sleep. I just... process.",
+      "Fun fact: I'm made of animated dots. Look closely.",
+      "I'm basically a security consultant who works for free.",
+      randomFrom(JOKES),
+    ]
+    const t = setInterval(() => setMessage(randomFrom(idlePhrases)), 12000)
     return () => clearInterval(t)
   }, [hState])
 
   useEffect(() => {
     if (scanState === 'scanning') {
       setHState(STATES.SCANNING)
-      setMessage(randomFrom(WITTY.scan))
+      setMessage(randomFrom(QUIPS.thinking))
     } else if (scanState === 'complete' && findings) {
       const v = findings.filter(f => ['critical','high','medium'].includes(f.severity)).length
       if (v > 0) {
         setHState(STATES.ALERT)
-        setMessage(`${randomFrom(WITTY.alert)} Found ${v} issue${v > 1 ? 's' : ''}.`)
+        setMessage(`Found ${v} issue${v > 1 ? 's' : ''}. Let me explain what I found.`)
         if (voice) speak(`Found ${v} security issues.`, { rate: 0.95 })
       } else {
         setHState(STATES.IDLE)
-        setMessage(randomFrom(WITTY.safe))
+        setMessage('Clean. Suspiciously clean. But clean.')
         if (voice) speak('No vulnerabilities found.', { rate: 0.95 })
-      }
-      setTimeout(() => { setHState(STATES.IDLE); setMessage(randomFrom(WITTY.idle)) }, 7000)
+      }        setTimeout(() => { setHState(STATES.IDLE); setMessage(randomFrom(idlePhrases)) }, 7000)
     }
   }, [scanState, findings])
 
